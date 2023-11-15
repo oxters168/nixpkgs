@@ -1961,6 +1961,8 @@ with pkgs;
 
   mymcplus = python3Packages.callPackage ../tools/games/mymcplus { };
 
+  nakama = callPackage ../servers/nakama { };
+
   near-cli = callPackage ../tools/misc/near-cli { };
 
   networkd-notify = python3Packages.callPackage ../tools/networking/networkd-notify {
