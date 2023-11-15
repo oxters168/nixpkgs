@@ -13543,6 +13543,15 @@
       fingerprint = "514B B966 B46E 3565 0508  86E8 0E6C A66E 5C55 7AA8";
     }];
   };
+  Oxters = {
+    email = "oxters168@gmail.com";
+    github = "oxters168";
+    githubId = 15348986;
+    name = "Oxters";
+    keys = [{
+      fingerprint = "DA08 8587 C87E E411 CB41 A42B 5DC1 752C 0624 E643";
+    }];
+  };
   oxzi = {
     email = "post@0x21.biz";
     github = "oxzi";
