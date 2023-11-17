@@ -23,10 +23,14 @@ stdenv.mkDerivation rec {
 		cp nakama $out/bin
 	'';
 
-#   # need to copy in the systemd units for systemd.packages to discover them
-#   postInstall = ''
-#     install -Dm444 -t $out/lib/systemd/system/ systemd/nakama.{service,socket}
-#   '';
+  # need to copy in the systemd units for systemd.packages to discover them
+  postInstall = ''
+    install -Dm444 -t $out/lib/systemd/system/ systemd/nakama.service
+  '';
+
+	passthru.tests = {
+		inherit (nixosTests) nakama;
+	};
 
 	meta = with lib; {
 		description = "The popular open-source game server";
