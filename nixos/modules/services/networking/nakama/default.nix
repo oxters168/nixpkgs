@@ -103,7 +103,6 @@ in {
 
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.socket.openFirewall cfg.settings.socket.port;
 
-    environment.etc."nakama/config.yaml".source = configFile;
     systemd.services.nakama = {
       description = "Nakama server";
       wantedBy = ["multi-user.target"];
@@ -117,9 +116,9 @@ in {
         RestartSec = 3;
         TimeoutSec = 6;
         LimitNOFILE = "1048576:1048576";
-        LimitNPPROC = "1048576:1048576";
-        ExecStartPre = "${pkgs.nakama}/bin/nakama migrate up --config /etc/nakama/config.yaml";
-        ExecStart = "${pkgs.nakama}/bin/nakama --config /etc/nakama/config.yaml";
+        LimitNPROC = "1048576:1048576";
+        ExecStartPre = "${pkgs.nakama}/bin/nakama migrate up --config ${configFile}";
+        ExecStart = "${pkgs.nakama}/bin/nakama --config ${configFile}";
       };
     };
   };
