@@ -24,14 +24,14 @@ stdenv.mkDerivation rec {
   '';
 
   # running nakama database migrations
-  postInstall = ''
-    [ -f $out/bin/config.yaml ]
-    if (($? == 0)); then
-      $out/bin/nakama migrate up --config $out/bin/config.yaml
-    else
-      $out/bin/nakama migrate up
-    fi
-  '';
+  # postInstall = ''
+  #   [ -f $out/bin/config.yaml ]
+  #   if (($? == 0)); then
+  #     $out/bin/nakama migrate up --config $out/bin/config.yaml
+  #   else
+  #     $out/bin/nakama migrate up
+  #   fi
+  # '';
 
   passthru.tests = {
     inherit (nixosTests) nakama;

@@ -3,12 +3,13 @@ import ./make-test-python.nix ({ pkgs, ... }: {
 
   nodes = {
     server = { config, pkgs, ... }: {
+      nixpkgs.config.allowUnfree = true;
       services.nakama.enable = true;
     };
   };
 
   testScript = ''
     start_all()
-    server.succeed("echo this runs on server")
+    server.succeed("echo Completed test successfully")
   '';
 })

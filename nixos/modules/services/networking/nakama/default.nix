@@ -2,15 +2,8 @@
 let
   cfg = config.services.nakama;
   defaultUser = "nakama";
-  nullFilter = name: value: value != null;
-  settings = lib.filterAttrs nullFilter cfg.settings;
-  configFile = lib.mkIf (lib.length settings != 0) (
-    pkgs.writeTextFile {
-      name = "config.yaml";
-      text = builtins.toJSON settings;
-      destination = "${pkgs.nakama}/bin/";
-    }
-  );
+  configFormat = pkgs.formats.yaml {};
+  configFile = configFormat.generate "config.yaml" cfg.settings;
 in {
   imports = [ ./options.nix ];
   # options specific to nix
@@ -21,7 +14,7 @@ in {
       default = defaultUser;
       example = "john";
       type = types.str;
-      description = lib.mdDoc ''
+      description = mdDoc ''
         The name of an existing user account to use to own the Nakama server
         process. If not specified, a default user will be created.
       '';
@@ -31,16 +24,37 @@ in {
       default = defaultUser;
       example = "users";
       type = types.str;
-      description = lib.mdDoc ''
+      description = mdDoc ''
         Group to own the Nakama process.
       '';
+    };
+
+    cockroachdb = {
+      enable = mkOption {
+        default = true;
+        type = types.bool;
+        description = mdDoc ''
+          Tells Nakama to use CockroachDB as its database. If this option is
+          disabled then you will need to set up PostgreSQL yourself as it is
+          unofficially supported by nakama.
+        '';
+      };
+      certsDir = mkOption {
+        default = null;
+        type = types.nullOr types.path;
+        description = mdDoc ''
+          The path to the certificate directory. If not set then CockroachDB
+          will be run in insecure mode. For more details:
+          https://www.cockroachlabs.com/docs/stable/cockroach-start#security
+        '';
+      };
     };
 
     cluster = {
       openFirewall = mkOption {
         default = false;
         type = types.bool;
-        description = lib.mdDoc ''
+        description = mdDoc ''
           Open ports in the firewall for nakama cluster.
         '';
       };
@@ -49,7 +63,7 @@ in {
       openFirewall = mkOption {
         default = false;
         type = types.bool;
-        description = lib.mdDoc ''
+        description = mdDoc ''
           Open port in the firewall for the console.
         '';
       };
@@ -58,7 +72,7 @@ in {
       openFirewall = mkOption {
         default = false;
         type = types.bool;
-        description = lib.mdDoc ''
+        description = mdDoc ''
           Open port in the firewall for prometheus.
         '';
       };
@@ -67,7 +81,7 @@ in {
       openFirewall = mkOption {
         default = false;
         type = types.bool;
-        description = lib.mdDoc ''
+        description = mdDoc ''
           Open port in the firewall for the client socket connection.
         '';
       };
@@ -75,9 +89,21 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # environment.systemPackages = [ cockroachdb ];
+    users.groups."${cfg.group}" = { };
+    users.users."${cfg.user}" = {
+      group = config.users.groups."${cfg.group}".name;
+      isSystemUser = true;
+    };
+
+    environment.systemPackages = if cfg.cockroachdb.enable then [ pkgs.cockroachdb ] else [ ];
+    services.cockroachdb = lib.mkIf cfg.cockroachdb.enable {
+      enable = true;
+      insecure = cfg.cockroachdb.certsDir == null;
+    };
+
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.socket.openFirewall cfg.settings.socket.port;
 
+    environment.etc."nakama/config.yaml".source = configFile;
     systemd.services.nakama = {
       description = "Nakama server";
       wantedBy = ["multi-user.target"];
@@ -92,7 +118,8 @@ in {
         TimeoutSec = 6;
         LimitNOFILE = "1048576:1048576";
         LimitNPPROC = "1048576:1048576";
-        ExecStart = "${pkgs.nakama}/bin/nakama";# --config ${configFile}";
+        ExecStartPre = "${pkgs.nakama}/bin/nakama migrate up --config /etc/nakama/config.yaml";
+        ExecStart = "${pkgs.nakama}/bin/nakama --config /etc/nakama/config.yaml";
       };
     };
   };
